@@ -5,7 +5,7 @@ import time
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-from main import app
+from __main__ import app
 from quart import request
 
 from routes.Kings.kings_model import Kingdom

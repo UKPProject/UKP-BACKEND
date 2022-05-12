@@ -13,7 +13,7 @@ cluster = motor_tornado.MotorClient(
 
 app.db = cluster["ukp"]
 
-import routes.Kings.kings_route
 
 if __name__ == '__main__':
+    import routes.Kings.kings_route
     app.run(port=7556, host="0.0.0.0")
