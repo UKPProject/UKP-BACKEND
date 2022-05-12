@@ -2,11 +2,11 @@ import os
 import sys
 import time
 
-from __main__ import app
-from quart import request
-
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+from main import app
+from quart import request
 
 from routes.Kings.kings_model import Kingdom
 from utils.authorize import authorize
