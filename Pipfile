@@ -5,6 +5,9 @@ name = "pypi"
 
 [packages]
 motor = "*"
+aiohttp = "*"
+quart-cors = "*"
+tornado = "*"
 
 [dev-packages]
 
