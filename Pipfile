@@ -5,9 +5,10 @@ name = "pypi"
 
 [packages]
 motor = "*"
-aiohttp = "*"
+aiohttp = {extras = ["speedups"], version = "*"}
 quart-cors = "*"
 tornado = "*"
+aiostream = "*"
 
 [dev-packages]
 
