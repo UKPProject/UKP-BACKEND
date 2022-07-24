@@ -69,5 +69,3 @@ class KingdomsM:
     @property
     def population(self) -> str:
         return str(self._population)
-
-# yes

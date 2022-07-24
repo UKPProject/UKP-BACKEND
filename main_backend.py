@@ -14,5 +14,3 @@ if __name__ == "__main__":
     app.add_routes(routes)
     KingdomsR(app)
     aiohttp.web.run_app(app, port=8888)
-
-# yes

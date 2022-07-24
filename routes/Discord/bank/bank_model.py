@@ -32,4 +32,3 @@ class BankM:
             "salary": float(self._salary)
         }
 
-# yes

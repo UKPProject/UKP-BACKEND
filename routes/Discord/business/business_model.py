@@ -9,6 +9,5 @@ class Business(TypedDict):
     description: str
     ownerSnowflake: str
     jobs: List[str]
-
-    # yes
+    
     
