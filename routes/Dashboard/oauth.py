@@ -22,7 +22,7 @@ async def callback():
             "https://discord.com/api/v10/oauth2/token",
             data={
                 "client_id": 974365585829937263,
-                "client_secret": "i0LObGQvKyunOxZPBhJYRRjzK_9CxPBM",
+                "client_secret": "hah ;)",
                 "grant_type": "authorization_code",
                 "code": code,
                 "redirect_uri": "http://localhost:3000/login"
