@@ -11,6 +11,7 @@ class Citizen(TypedDict):
     gender: str
     birthplace: str
     titles: List[str]
+# yes
     birthday: str
 
 

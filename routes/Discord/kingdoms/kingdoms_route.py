@@ -30,3 +30,5 @@ class KingdomsR:
             return web.json_response({"error": "400", "message": f"Kingdom with name {kingdom_name} does not exist."}, status=400)
         final_kingdom = KingdomsM(found).data()
         return web.json_response(final_kingdom, status=200)
+
+    # yes

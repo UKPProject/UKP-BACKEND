@@ -31,4 +31,5 @@ class BankM:
             "socialCredits": float(self._socialCredits),
             "salary": float(self._salary)
         }
-    
+
+# yes

@@ -49,4 +49,5 @@ class CitizenR:
             return web.json_response({"message": "Success!"}, status=200)
         else:
             return web.json_response({"error": "400", "message": "User with this discord ID already registered"}, status=200)
-        
+
+        # yes

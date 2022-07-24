@@ -62,3 +62,5 @@ class KingdomsR:
         await db["bank"].insert_one(data)
         return web.json_response({"message": "Success!"}, status=200)
         
+
+# yes
