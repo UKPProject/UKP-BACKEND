@@ -1,0 +1,2 @@
+class DataNotFilled(Exception):
+    pass

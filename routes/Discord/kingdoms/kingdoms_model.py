@@ -1,19 +1,24 @@
 from typing import List, Dict, Union
 
+from utils.exceptions import DataNotFilled
+
 
 class KingdomsM:
     def __init__(self, cursor: dict):
-        self._name: str = str(cursor.get('name'))
-        self._kings: List[str] = list(cursor.get('kings'))
-        self._princes: List[str] = list(cursor.get('princes'))
-        self._description: str = str(cursor.get('description'))
-        self._money: str = str(cursor.get('money'))
-        self._population: str = str(cursor.get('population'))
-        self._cities: List[str] = list(cursor.get('cities'))
-        self._capital: str = str(cursor.get('capital'))
-        self._currency: str = str(cursor.get('currency'))
-        self._territory: str = str(cursor.get('territory'))
-        self._alliances: List[str] = list(cursor.get("alliances"))
+        try:
+            self._name: str = str(cursor.get('name'))
+            self._kings: List[str] = list(cursor.get('kings'))
+            self._princes: List[str] = list(cursor.get('princes'))
+            self._description: str = str(cursor.get('description'))
+            self._money: str = str(cursor.get('money'))
+            self._population: str = str(cursor.get('population'))
+            self._cities: List[str] = list(cursor.get('cities'))
+            self._capital: str = str(cursor.get('capital'))
+            self._currency: str = str(cursor.get('currency'))
+            self._territory: str = str(cursor.get('territory'))
+            self._alliances: List[str] = list(cursor.get("alliances"))
+        except TypeError:
+            raise DataNotFilled
     
     async def data(self) -> Dict[str, Union[str, List[str]]]:
         return {

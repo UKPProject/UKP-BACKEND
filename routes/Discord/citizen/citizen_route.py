@@ -2,6 +2,7 @@ import aiohttp.web_app
 from aiohttp import web
 
 from routes.Discord.citizen.citizen_model import CitizenM
+from utils.exceptions import DataNotFilled
 
 
 class CitizenR:
@@ -38,7 +39,7 @@ class CitizenR:
         req_json = await request.json()
         try:
             CitizenM(req_json)
-        except TypeError:
+        except DataNotFilled:
             return web.json_response({
                 "error": "400", "message": "Please provide all needed values in your request json"
             }, status=400)

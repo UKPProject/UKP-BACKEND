@@ -2,7 +2,9 @@ import aiohttp.web_app
 from aiohttp import web
 
 from routes.Discord.bank.bank_model import BankM
+from routes.Discord.business.business_model import BusinessM
 from routes.Discord.citizen.citizen_model import CitizenM
+from utils.exceptions import DataNotFilled
 
 
 class KingdomsR:
@@ -37,28 +39,42 @@ class KingdomsR:
         
     async def create_bank_account(self, request: web.Request):
         req_json = await request.json()
+        
         try:
             await BankM(req_json).data()
-        except TypeError:
+        except DataNotFilled:
             return web.json_response({
                 "error": "400",
                 "message": "Please fill all data in your request json"
             }, status=400)
+        
         db = self.app['db']
         data = await BankM(req_json).data()
+        
         found = await db["bank"].find_one({"pseo": str(data.get("pseo")), "snowflake": str(data.get("snowflake"))})
         if found is not None:
             return web.json_response({
                 "error": "409",
                 "message": "Account of that user already exists"
             }, status=409)
+        
         found_business = await db["businesses"].find_one({"name": str(data.get("business"))})
         if found_business is None:
             return web.json_response({
                 "error": "404",
                 "message": "Business with that name not found"
             }, status=404)
-        employees = [
+        
+        business = await BusinessM(found_business).data()
+        employees = business.get("employees")
+        employees.append({
+            "snowflake": str(data.get("snowflake")),
+            "salary": float(data.get("salary")),
+            "pseo": str(data.get("pseo"))
+        })
+        
         await db["bank"].insert_one(data)
+        await db["businesses"].update_one({"name": str(data.get("business"))}, {"$set": {"employees": employees}})
+        
         return web.json_response({"message": "Success!"}, status=200)
         
