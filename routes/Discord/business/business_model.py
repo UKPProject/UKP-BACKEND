@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Dict
+from typing import TypedDict, List
 
 from utils.exceptions import DataNotFilled
 
@@ -7,6 +7,7 @@ class Employee(TypedDict):
     snowflake: str
     pseo: str
     salary: float
+    worked: int
 
 
 class Business(TypedDict):
@@ -40,5 +41,5 @@ class BusinessM:
             "address": str(self._address),
             "description": str(self._description),
             "ownerSnowflake": str(self._ownerSnowflake),
-            "jobs": list(self._jobs)
+            "jobs": list(self._jobs),
         }

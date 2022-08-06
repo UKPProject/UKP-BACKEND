@@ -1,14 +1,17 @@
 from aiohttp import web
 from routes.Discord.kingdoms.kingdoms_model import KingdomsM
+from utils.exceptions import DataNotFilled
 
 
 class KingdomsR:
     def __init__(self, app):
         self.app = app
         self.app.add_routes([
-            web.get("/kingdoms/fetch", self.fetch_kingdoms),
-            web.options("/kingdoms/fetch", self.get_kingdom)
+            web.get("/kingdoms", self.fetch_kingdoms),
+            web.options("/kingdoms", self.get_kingdom),
+            web.post("/kingdoms", self.create_kingdom)
         ])
+        print("🟡 | Kingdoms")
         
     async def fetch_kingdoms(self, request: web.Request):
         db = self.app['db']["kingdoms"]
@@ -31,3 +34,18 @@ class KingdomsR:
         final_kingdom = KingdomsM(found).data()
         return web.json_response(final_kingdom, status=200)
     
+    async def create_kingdom(self, request:web.Request):
+        req_json = await request.json()
+        try:
+            await KingdomsM(req_json).data()
+        except DataNotFilled:
+            return web.json_response({"error": "400", "message": "Please fill up all necessary data"}, status=400)
+        db = self.app['db']["kingdoms"]
+        data = await KingdomsM(req_json).data()
+        found = await db.find_one({"name": str(data.get("name"))})
+        if found is not None:
+            return web.json_response({"error": "409", "message": "Kingdom with this name already exists"}, status=409)
+        await db.insert_one(data)
+        
+        return web.json_response({"message": "Success!"}, status=200)
+        

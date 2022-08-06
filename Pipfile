@@ -9,6 +9,7 @@ aiohttp = {extras = ["speedups"], version = "*"}
 quart-cors = "*"
 tornado = "*"
 aiostream = "*"
+qt-backport = "*"
 
 [dev-packages]
 
