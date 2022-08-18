@@ -1,4 +1,6 @@
 import asyncio
+import datetime
+import threading
 
 import aiohttp.web_app
 
@@ -6,10 +8,28 @@ from routes.Discord.bank.bank_model import BankM
 from routes.Discord.business.business_model import BusinessM
 
 
+def wait_for_clock(hour, minute, result=None):
+    t = datetime.datetime.combine(
+        datetime.date.today(),
+        datetime.time(hour, minute)
+    )
+    
+    tt = datetime.datetime.now()
+    
+    if tt >= t:
+        t += datetime.timedelta(days=1)
+    
+    delta = t - tt
+    delta_sec = delta.seconds + delta.microseconds * 0.000001
+    
+    return asyncio.sleep(delta_sec, result)
+
+
 class UpdateSalary:
     def __init__(self, app: aiohttp.web_app.Application):
         self.app = app
         print("🟡 | UpdateSalary")
+        threading.Thread(target=asyncio.run, args=(self.update_salary(), )).start()
     
     async def update_citizen(self, citizen: BankM):
         db = self.app['db']
@@ -30,12 +50,14 @@ class UpdateSalary:
                     )
                     }}
                 )
-        
+    
     async def update_salary(self):
-        db = self.app['db']
-        found_citizens = db["bank"].find({})
-        pr = []
-        async for citizen in found_citizens:
-            pr.append(self.update_citizen(BankM(citizen)))
-        await asyncio.gather(*pr)
-        print("")
+        while True:
+            await wait_for_clock(0, 0)
+            db = self.app['db']
+            found_citizens = db["bank"].find({})
+            pr = []
+            async for citizen in found_citizens:
+                pr.append(self.update_citizen(BankM(citizen)))
+            await asyncio.gather(*pr)
+            print(f"🟣 | {datetime.datetime.now()} | Updated salaries")

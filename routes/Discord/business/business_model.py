@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import TypedDict, List
 
 from utils.exceptions import DataNotFilled
@@ -9,7 +10,6 @@ class Employee(TypedDict):
     salary: float
     worked: int
 
-
 class Business(TypedDict):
     name: str
     employees: List[Employee]
@@ -17,6 +17,7 @@ class Business(TypedDict):
     address: str
     description: str
     ownerSnowflake: str
+    companyType: str
     jobs: List[str]
 
 
@@ -29,6 +30,7 @@ class BusinessM:
             self._address: str = str(cursor.get("address"))
             self._description: str = str(cursor.get("description"))
             self._ownerSnowflake: str = str(cursor.get("ownerSnowflake"))
+            self._companyType: str = cursor.get("companyType")
             self._jobs: List[str] = list(cursor.get("jobs"))
         except TypeError:
             raise DataNotFilled
@@ -41,5 +43,7 @@ class BusinessM:
             "address": str(self._address),
             "description": str(self._description),
             "ownerSnowflake": str(self._ownerSnowflake),
+            "companyType": self._companyType,
             "jobs": list(self._jobs),
         }
+
