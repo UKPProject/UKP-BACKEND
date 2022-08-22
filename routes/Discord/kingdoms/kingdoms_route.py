@@ -1,4 +1,6 @@
 from aiohttp import web
+from colorama import Fore
+
 from routes.Discord.kingdoms.kingdoms_model import KingdomsM
 from utils.exceptions import DataNotFilled
 
@@ -8,10 +10,10 @@ class KingdomsR:
         self.app = app
         self.app.add_routes([
             web.get("/kingdoms", self.fetch_kingdoms),
-            web.options("/kingdoms", self.get_kingdom),
+            web.get("/kingdom", self.get_kingdom),
             web.post("/kingdoms", self.create_kingdom)
         ])
-        print("🟡 | Kingdoms")
+        print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| Kingdoms")
         
     async def fetch_kingdoms(self, request: web.Request):
         db = self.app['db']["kingdoms"]

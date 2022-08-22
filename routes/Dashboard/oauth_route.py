@@ -1,5 +1,11 @@
 import aiohttp.web_app
 from aiohttp import web
+from colorama import Fore
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class OAuthR:
@@ -9,7 +15,7 @@ class OAuthR:
             web.post("/oauth/callback", self.oauth_callback),
             web.get("/oauth/users/me", self.get_user)
         ])
-        print("🟡 | OAuth")
+        print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| OAuth")
     
     async def oauth_callback(self, request: web.Request):
         req_json = await request.json()
@@ -24,20 +30,18 @@ class OAuthR:
         
         async with aiohttp.ClientSession() as session:
             async with session.post("https://discord.com/api/v10/oauth2/token", data={
-                "client_id": 974365585829937263,
-                "client_secret": "hah ;)",
+                "client_id": os.getenv('CLIENT_ID'),
+                "client_secret": os.getenv('CLIENT_SECRET_KEY'),
                 "grant_type": "authorization_code",
                 "code": code,
                 "redirect_uri": "http://localhost:3000/login"
             }, headers={"Content-Type": "application/x-www-form-urlencoded"}) as resp:
                 data = await resp.json()
         
-        token = data.get("access_token")
-        
         return web.json_response({
             "status_code": "200",
             "ctx": "success",
-            "message": token
+            "message": data
         }, status=200)
     
     async def get_user(self, request: web.Request):

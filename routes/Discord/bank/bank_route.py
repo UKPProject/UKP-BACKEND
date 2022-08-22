@@ -3,6 +3,7 @@ from typing import TypedDict
 
 import aiohttp.web_app
 from aiohttp import web
+from colorama import Fore
 
 from routes.Discord.bank.bank_model import BankM
 from routes.Discord.business.business_model import BusinessM
@@ -30,7 +31,7 @@ class BankR:
             web.get("/bank/account", self.get_bank_account),
             web.post("/bank/account", self.create_bank_account)
         ])
-        print("🟡 | Bank")
+        print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| Bank")
     
     async def send_money(self, request: web.Request):
         req_json = await request.json()

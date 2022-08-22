@@ -3,6 +3,7 @@ import time
 
 import aiohttp.web_app
 from aiohttp import web
+from colorama import Fore
 
 from routes.Discord.bank.bank_model import BankM
 from routes.Discord.bank.bank_route import log_payment
@@ -20,7 +21,7 @@ class CitizenR:
             web.post("/citizen/work", self.citizen_work),
             web.post("/citizen/job", self.change_job)
         ])
-        print("🟡 | Citizen")
+        print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| Citizen")
     
     async def change_job(self, request: web.Request):
         req_json = await request.json()

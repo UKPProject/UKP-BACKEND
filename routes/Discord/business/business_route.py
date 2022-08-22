@@ -1,5 +1,6 @@
 import aiohttp.web_app
 from aiohttp import web
+from colorama import Fore
 
 from routes.Discord.business.business_model import BusinessM
 from utils.exceptions import DataNotFilled
@@ -12,7 +13,7 @@ class BusinessR:
             web.get("/business", self.get_business),
             web.post("/business", self.create_business)
         ])
-        print("🟡 | Business")
+        print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| Business")
         
     async def create_business(self, request: web.Request):
         req_json = await request.json()

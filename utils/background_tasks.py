@@ -1,7 +1,8 @@
 import asyncio
 import datetime
+import random
 import threading
-
+from colorama import Fore
 import aiohttp.web_app
 
 from routes.Discord.bank.bank_model import BankM
@@ -28,8 +29,9 @@ def wait_for_clock(hour, minute, result=None):
 class UpdateSalary:
     def __init__(self, app: aiohttp.web_app.Application):
         self.app = app
-        print("🟡 | UpdateSalary")
-        threading.Thread(target=asyncio.run, args=(self.update_salary(), )).start()
+        print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| UpdateSalary")
+        threading.Thread(target=asyncio.run, args=(self.update_rates(),)).start()
+        threading.Thread(target=asyncio.run, args=(self.update_salary(),)).start()
     
     async def update_citizen(self, citizen: BankM):
         db = self.app['db']
@@ -51,6 +53,18 @@ class UpdateSalary:
                     }}
                 )
     
+    async def update_rates(self):
+        while True:
+            db = self.app['db']
+            found_rates = db["rates"].find({})
+            async for rate in found_rates:
+                await db["rates"].update_one(
+                    {"code": str(rate.get("code"))},
+                    {"$inc": {"value": int(random.randint((rate.get("value") - 2500), (rate.get("value") + 2500)))}}
+                )
+            print(f"{Fore.MAGENTA}[TASK]{Fore.RESET}| {datetime.datetime.now()} | Updated rates values")
+            await asyncio.sleep(300)
+            
     async def update_salary(self):
         while True:
             await wait_for_clock(0, 0)
@@ -60,4 +74,6 @@ class UpdateSalary:
             async for citizen in found_citizens:
                 pr.append(self.update_citizen(BankM(citizen)))
             await asyncio.gather(*pr)
-            print(f"🟣 | {datetime.datetime.now()} | Updated salaries")
+            print(f"{Fore.MAGENTA}[TASKS]{Fore.RESET} | {datetime.datetime.now()} | Updated salaries limit")
+            
+        
