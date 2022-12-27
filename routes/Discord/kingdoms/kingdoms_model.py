@@ -1,6 +1,6 @@
 from typing import List, Dict, Union
 
-from utils.exceptions import DataNotFilled
+from tools.miscellaneous import DataNotFilled
 
 
 class KingdomsM:

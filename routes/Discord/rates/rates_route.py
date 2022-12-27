@@ -3,18 +3,31 @@ from aiohttp import web
 from colorama import Fore
 
 from routes.Discord.rates.rates_model import RatesM
-from utils.exceptions import DataNotFilled
+from tools.miscellaneous import DataNotFilled, log
 
 
 class RatesR:
     def __init__(self, app: aiohttp.web_app.Application):
         self.app: aiohttp.web_app.Application = app
         self.app.add_routes([
-            web.post("/rates", self.create_rate),
-            web.get("/rates", self.get_rate),
-            web.put("/rates", self.update_rate)
+            web.post("/rate", self.create_rate),
+            web.get("/rates", self.get_all_rates),
+            web.get("/rate", self.get_rate),
+            web.put("/rate", self.update_rate)
         ])
         print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| Rates")
+        
+    async def get_all_rates(self, request: web.Request):
+        rates = self.app['db']["rates"].find({})
+        parsed = []
+        async for rate in rates:
+            parsed.append(await RatesM(rate).data())
+        await log(request, 200)
+        return web.json_response({
+            "status_code": "200",
+            "ctx": "success",
+            "message": parsed,
+        }, status=200)
     
     async def update_rate(self, request: web.Request):
         req_json = await request.json()
@@ -37,7 +50,7 @@ class RatesR:
                 }, status=400)
             rate = await RatesM(found).data()
             await self.app['db']["rates"].update_one({"code": str(code)}, {"$push": {"oldValues": rate.get("value")}})
-            await self.app['db']["rates"].update_one({"code": str(code)}, {"$set": {"value": float(new_value)}})
+            await self.app['db']["rates"].update_one({"code": str(code)}, {"$set": {"value": int(new_value)}})
             return web.json_response({
                 "status_code": "200",
                 "ctx": "success",
@@ -54,7 +67,7 @@ class RatesR:
                 }, status=400)
             rate = await RatesM(found).data()
             await self.app['db']["rates"].update_one({"name": str(name)}, {"$push": {"oldValues": rate.get("value")}})
-            await self.app['db']["rates"].update_one({"name": str(name)}, {"$set": {"value": float(new_value)}})
+            await self.app['db']["rates"].update_one({"name": str(name)}, {"$set": {"value": int(new_value)}})
             return web.json_response({
                 "status_code": "200",
                 "ctx": "success",

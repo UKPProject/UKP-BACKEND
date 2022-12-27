@@ -3,7 +3,7 @@ from aiohttp import web
 from colorama import Fore
 
 from routes.Discord.business.business_model import BusinessM
-from utils.exceptions import DataNotFilled
+from tools.miscellaneous import DataNotFilled
 
 
 class BusinessR:
@@ -47,29 +47,42 @@ class BusinessR:
         req_headers = request.headers
         owner_snowflake = req_headers.get("owner_snowflake")
         name = req_headers.get("name")
-        if owner_snowflake and name is None:
+        businessId = req_headers.get("businessId")
+        if owner_snowflake and name is None and businessId is None:
             return web.json_response({
                 "status_code": "400",
                 "ctx": "data",
                 "message": "no one of possible queries found in request headers"
             }, status=400)
         db = self.app['db']
-        if name is None:
+        if name is None and businessId is None:
             business_found = await db["business"].find_one({"ownerSnowflake": str(owner_snowflake)})
+            business_data = await BusinessM(business_found).data()
             if business_found is None:
                 return web.json_response({
                     "status_code": "400",
                     "ctx": "not_found",
                     "message": f"business with this owner snowflake ({owner_snowflake}) not found"
                 }, status=400)
-            return web.json_response({"status_code": "200", "ctx": "success", "message": business_found}, status=200)
+            return web.json_response({"status_code": "200", "ctx": "success", "message": business_data}, status=200)
             
-        elif owner_snowflake is None:
+        elif owner_snowflake is None and businessId is None:
             business_found = await db["business"].find_one({"name": str(name)})
+            business_data = await BusinessM(business_found).data()
             if business_found is None:
                 return web.json_response({
                     "status_code": "400",
                     "ctx": "not_found",
                     "message": f"business with this name ({name}) not found"
                 }, status=400)
-            return web.json_response({"status_code": "200", "ctx": "success", "message": business_found}, status=200)
+            return web.json_response({"status_code": "200", "ctx": "success", "message": business_data}, status=200)
+        elif name is None and owner_snowflake is None:
+            business_found = await db["business"].find_one({"businessId": str(businessId)})
+            business_data = await BusinessM(business_found).data()
+            if business_found is None:
+                return web.json_response({
+                    "status_code": "400",
+                    "ctx": "not_found",
+                    "message": f"business with this businessId ({businessId}) not found"
+                }, status=400)
+            return web.json_response({"status_code": "200", "ctx": "success", "message": business_data}, status=200)

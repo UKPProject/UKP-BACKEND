@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-motor = "*"
 aiohttp = {extras = ["speedups"], version = "*"}
 quart-cors = "*"
 tornado = "*"
@@ -14,6 +13,9 @@ termcolor = "*"
 colorama = "*"
 aiohttp-cors = "*"
 python-dotenv = "*"
+motor = "*"
+spacy = "*"
+pytz = "*"
 
 [dev-packages]
 

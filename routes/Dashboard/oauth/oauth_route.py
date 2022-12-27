@@ -19,6 +19,7 @@ class OAuthR:
     
     async def oauth_callback(self, request: web.Request):
         req_json = await request.json()
+        print(req_json)
         code = req_json.get("code")
         
         if code is None:
@@ -30,14 +31,14 @@ class OAuthR:
         
         async with aiohttp.ClientSession() as session:
             async with session.post("https://discord.com/api/v10/oauth2/token", data={
-                "client_id": os.getenv('CLIENT_ID'),
-                "client_secret": os.getenv('CLIENT_SECRET_KEY'),
+                "client_id": "909559827330662470",
+                "client_secret": "WUg-_jgTXE4IZ54cUC5_G2u66FZNbmk7",
                 "grant_type": "authorization_code",
                 "code": code,
-                "redirect_uri": "http://localhost:3000/login"
+                "redirect_uri": "https://unitedkp.me/login"
             }, headers={"Content-Type": "application/x-www-form-urlencoded"}) as resp:
                 data = await resp.json()
-        
+        print(data)
         return web.json_response({
             "status_code": "200",
             "ctx": "success",

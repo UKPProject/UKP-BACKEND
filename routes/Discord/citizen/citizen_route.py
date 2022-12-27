@@ -9,7 +9,7 @@ from routes.Discord.bank.bank_model import BankM
 from routes.Discord.bank.bank_route import log_payment
 from routes.Discord.business.business_model import BusinessM, Employee
 from routes.Discord.citizen.citizen_model import CitizenM
-from utils.exceptions import DataNotFilled
+from tools.miscellaneous import DataNotFilled, log
 
 
 class CitizenR:
@@ -30,6 +30,7 @@ class CitizenR:
         citizen_snowflake = req_json.get({"citizen_snowflake"})
         
         if new_job_name is None:
+            await log(request, 400)
             return web.json_response({
                 "status_code": "400",
                 "ctx": "json",
@@ -40,16 +41,18 @@ class CitizenR:
         business_found = await db['business'].find_one({"name": str(new_job_name)})
         
         if business_found is None:
+            await log(request, 400)
             return web.json_response({
                 "status_code": "400",
                 "ctx": "business",
                 "message": f"company with that name ({new_job_name}) not found"
-            }, status=404)
+            }, status=400)
         
         new_business = await BusinessM(business_found).data()
         citizen = await db['bank'].find_one({"snowflake": str(citizen_snowflake)})
         
         if citizen is None:
+            await log(request, 400)
             return web.json_response({
                 "status_code": "400",
                 "ctx": "citizen",
@@ -62,7 +65,7 @@ class CitizenR:
         old_business_found = await db['business'].find_one({"name": str(bank_m.get("business"))})
         old_business = await BusinessM(old_business_found).data()
         if new_job_salary is None:
-            new_job_salary: float = 0.00
+            new_job_salary: int = 0.00
             for employee in old_business.get("employees"):
                 if employee.get("snowflake") == citizen_snowflake:
                     new_job_salary = employee.get("salary")
@@ -74,14 +77,14 @@ class CitizenR:
         await db['business'].update_one({"name": str(new_business.get("name"))}, {"$push": {"employees": {
             "snowflake": str(bank_m.get('snowflake')),
             "pseo": str(bank_m.get("pseo")),
-            "salary": float(new_job_salary),
+            "salary": int(new_job_salary),
             "worked": 0
         }}})
         await db['bank'].update_one({"snowflake": str(citizen_snowflake)}, {"$set": {
             "business": str(new_business.get("name")),
             "salary": 0.00
         }})
-        
+        await log(request, 200)
         return web.json_response({
             "status_code": "200",
             "message": "Changed job successfully",
@@ -103,11 +106,13 @@ class CitizenR:
                                      status=404)
         found_bank = await db["bank"].find_one({"snowflake": str(snowflake)})
         if found_bank is None:
+            await log(request, 409)
             return web.json_response({"status_code": "409", "message": "Provided user have no bank account in UKP"},
                                      status=409)
         citizen = await CitizenM(found_citizen).data()
         bank_account = await BankM(found_bank).data()
         if bank_account["salary"] == 0.00:
+            await log(request, 406)
             return web.json_response({"status_code": "406", "message": "User has no more daily salary"}, status=406)
         
         money = round(random.uniform(0.01, (bank_account["salary"] / 2)), 2)
@@ -118,12 +123,12 @@ class CitizenR:
         await log_payment(db, {
             "sender": str(bank_account.get("business")),
             "receiver": str(snowflake),
-            "money": float(money),
+            "money": int(money),
             "timestamp": str(int(time.time())),
-            "method": "plus" if float(money) >= 0.00 else "minus",
+            "method": "plus" if int(money) >= 0.00 else "minus",
             "reason": "salary"
         })
-        
+        await log(request, 200)
         return web.json_response({
             "status_code": "200",
             "ctx": "success",
@@ -136,6 +141,7 @@ class CitizenR:
         pseo = req_headers.get("pseo")
         snowflake = req_headers.get("snowflake")
         if pseo is None and snowflake is None:
+            await log(request, 400)
             return web.json_response(
                 {"status_code": "400", "message": "Please provide valid PSEO or discord ID (snowflake)"},
                 status=400)
@@ -145,13 +151,19 @@ class CitizenR:
                 return web.json_response({"status_code": "400", "message": "Please provide valid PSEO or discord ID ("
                                                                            "snowflake)"}, status=400)
             citizen = await CitizenM(found).data()
-            return web.json_response(citizen, status=200)
+            await log(request, 200)
+            return web.json_response({
+                "status_code": "200",
+                "ctx": "success",
+                "message": citizen
+            }, status=200)
         elif snowflake is None:
             found = await self.app['db']["citizens"].find_one({"pseo": str(pseo)})
             if found is None:
                 return web.json_response({"status_code": "400", "message": "Please provide valid PSEO or discord ID ("
                                                                            "snowflake)"}, status=400)
             citizen = await CitizenM(found).data()
+            await log(request, 200)
             return web.json_response({
                 "status_code": "200",
                 "ctx": "success",
@@ -163,6 +175,7 @@ class CitizenR:
         try:
             CitizenM(req_json)
         except DataNotFilled:
+            await log(request, 400)
             return web.json_response({
                 "status_code": "400",
                 "ctx": "data",
@@ -172,12 +185,14 @@ class CitizenR:
         found_check = await self.app['db']["citizens"].find_one({"snowflake": str(new_citizen["snowflake"])})
         if found_check is None:
             await self.app['db']["citizens"].insert_one(new_citizen)
+            await log(request, 200)
             return web.json_response({
                 "status_code": "200",
                 "ctx": "success",
                 "message": "Citizen created successfully"
             }, status=200)
         else:
+            await log(request, 400)
             return web.json_response({
                 "status_code": "400",
                 "ctx": "exists",

@@ -1,6 +1,6 @@
 from typing import List, TypedDict
 
-from utils.exceptions import DataNotFilled
+from tools.miscellaneous import DataNotFilled
 
 
 class Citizen(TypedDict):

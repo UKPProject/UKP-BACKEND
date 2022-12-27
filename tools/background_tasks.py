@@ -7,6 +7,7 @@ import aiohttp.web_app
 
 from routes.Discord.bank.bank_model import BankM
 from routes.Discord.business.business_model import BusinessM
+from tools.miscellaneous import log
 
 
 def wait_for_clock(hour, minute, result=None):
@@ -37,7 +38,7 @@ class UpdateSalary:
         db = self.app['db']
         citizen_data = await citizen.data()
         
-        found_business = await db['businesses'].find_one({"name": str(citizen_data.get("business"))})
+        found_business = await db['business'].find_one({"name": str(citizen_data.get("business"))})
         business = await BusinessM(found_business).data()
         
         employees = business.get("employees")
@@ -45,9 +46,9 @@ class UpdateSalary:
             if str(employee.get("snowflake")) == str(citizen_data.get("snowflake")):
                 await db['bank'].update_one(
                     {"snowflake": str(citizen_data.get("snowflake"))},
-                    {"$set": {"salary": float(
+                    {"$set": {"salary": int(
                         round(
-                            float(citizen_data.get("salary")) + float(employee.get("salary")),
+                            int(citizen_data.get("salary")) + int(employee.get("salary")),
                             2)
                     )
                     }}
@@ -58,11 +59,17 @@ class UpdateSalary:
             db = self.app['db']
             found_rates = db["rates"].find({})
             async for rate in found_rates:
+                generated_int = random.randint(-30, 30)
+                if int(rate.get("value")) + generated_int < 350:
+                    generated_int = random.randint(0, 10)
+                if int(rate.get("value")) + generated_int > 800:
+                    generated_int = random.randint(-5, 5)
                 await db["rates"].update_one(
                     {"code": str(rate.get("code"))},
-                    {"$inc": {"value": int(random.randint((rate.get("value") - 2500), (rate.get("value") + 2500)))}}
+                    {"$inc": {"value": int(generated_int)}, "$push": {"oldValues": rate.get("value")}}
                 )
-            print(f"{Fore.MAGENTA}[TASK]{Fore.RESET}| {datetime.datetime.now()} | Updated rates values")
+                
+            await log(custom_message=f"{Fore.MAGENTA}[TASK]{Fore.RESET}| {datetime.datetime.now()} | Updated rates values")
             await asyncio.sleep(300)
             
     async def update_salary(self):
@@ -74,6 +81,6 @@ class UpdateSalary:
             async for citizen in found_citizens:
                 pr.append(self.update_citizen(BankM(citizen)))
             await asyncio.gather(*pr)
-            print(f"{Fore.MAGENTA}[TASKS]{Fore.RESET} | {datetime.datetime.now()} | Updated salaries limit")
+            await log(custom_message=f"{Fore.MAGENTA}[TASKS]{Fore.RESET} | {datetime.datetime.now()} | Updated salaries limit")
             
         

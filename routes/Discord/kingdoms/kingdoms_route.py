@@ -2,7 +2,7 @@ from aiohttp import web
 from colorama import Fore
 
 from routes.Discord.kingdoms.kingdoms_model import KingdomsM
-from utils.exceptions import DataNotFilled
+from tools.miscellaneous import DataNotFilled
 
 
 class KingdomsR:
