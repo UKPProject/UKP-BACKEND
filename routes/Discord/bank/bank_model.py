@@ -9,8 +9,12 @@ class Bank(TypedDict):
     balance: int
     job: str
     business: str
+    businessId: str
     socialCredits: int
+    dailySalary: int
     salary: int
+    kingdom: str
+
 
 
 class BankM:
@@ -21,8 +25,11 @@ class BankM:
             self._balance: int = int(cursor.get("balance"))
             self._job: str = str(cursor.get("job"))
             self._business: str = str(cursor.get("business"))
+            self._businessId: str = str(cursor.get("businessId"))
             self._socialCredits: int = int(cursor.get("socialCredits"))
+            self._dailySalary: int = int(cursor.get("dailySalary"))
             self._salary: int = int(cursor.get("salary"))
+            self._kingdom: str = str(cursor.get("kingdom"))
         except TypeError:
             raise DataNotFilled
     
@@ -33,16 +40,10 @@ class BankM:
             "balance": int(self._balance),
             "job": str(self._job),
             "business": str(self._business),
+            "businessId": str(self._businessId),
             "socialCredits": int(self._socialCredits),
-            "salary": int(self._salary)
+            "dailySalary": int(self._dailySalary),
+            "salary": int(self._salary),
+            "kingdom": str(self._kingdom)
         }
-    {
-        "snowflake": "698239897755975960",
-        "pseo": "5-253492-AC1",
-        "balance": 5063,
-        "job": "Pracownik-imigrant w McDonalds",
-        "business": "McDonalds",
-        "socialCredits": 0,
-        "salary": 1200
-    }
 

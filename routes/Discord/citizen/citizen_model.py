@@ -6,7 +6,6 @@ from tools.miscellaneous import DataNotFilled
 class Citizen(TypedDict):
     firstName: str
     lastName: str
-    age: str
     kingdom: str
     snowflake: str
     pseo: str
@@ -21,7 +20,6 @@ class CitizenM:
         try:
             self._firstName: str = str(cursor.get("firstName"))
             self._lastName: str = str(cursor.get("lastName"))
-            self._age: str = str(cursor.get("age"))
             self._kingdom: str = str(cursor.get("kingdom"))
             self._snowflake: str = str(cursor.get("snowflake"))
             self._pseo: str = str(cursor.get("pseo"))
@@ -36,7 +34,6 @@ class CitizenM:
         return {
             "firstName": str(self._firstName),
             "lastName": str(self._lastName),
-            "age": str(self._age),
             "kingdom": str(self._kingdom),
             "pseo": str(self._pseo),
             "gender": str(self._gender),

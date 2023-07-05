@@ -35,13 +35,13 @@ class MinecraftAuthAPI:
     def __init__(self, app: aiohttp.web_app.Application):
         self.app: aiohttp.web_app.Application = app
         self.app.add_routes([
-            web.get("/ws", self.websocket_handler),
+            web.get("/minecraft/auth/ws", self.websocket_handler),
             web.get("/minecraft/auth", self.check_player_authorized)
         ])
         self.authorized_connections = []
         self.authorized_tokens = ["PLUGIN_WEBSOCKET", "BOT_WEBSOCKET"]
         self.used_tokens: List[ConnectionWS] = []
-        print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| MinecraftWebsocket")
+        print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| MinecraftAuthorizationAPI")
         
     async def check_player_authorized(self, request: web.Request):
         req_headers = request.headers

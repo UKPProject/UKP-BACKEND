@@ -1,5 +1,6 @@
 import random
 import time
+import uuid
 
 import aiohttp.web_app
 from aiohttp import web
@@ -92,8 +93,10 @@ class CitizenR:
         }, status=200)
     
     async def citizen_work(self, request: web.Request):
-        req_json = await request.json()
-        snowflake = req_json.get("snowflake")
+        req_headers = request.headers
+        snowflake = req_headers.get("snowflake")
+        transaction_token = str(uuid.uuid4())
+        
         if snowflake is None:
             return web.json_response({"status_code": "400", "message": "Please provide valid discord ID (snowflake)"},
                                      status=400)
@@ -102,22 +105,39 @@ class CitizenR:
         
         found_citizen = await db["citizens"].find_one({"snowflake": str(snowflake)})
         if found_citizen is None:
-            return web.json_response({"status_code": "404", "message": "Provided user have no identify in UKP"},
+            return web.json_response({"status_code": "404", "ctx": "citizen_not_found", "message": "Provided user has no identify in UKP"},
                                      status=404)
         found_bank = await db["bank"].find_one({"snowflake": str(snowflake)})
         if found_bank is None:
-            await log(request, 409)
-            return web.json_response({"status_code": "409", "message": "Provided user have no bank account in UKP"},
-                                     status=409)
+            await log(request, 404)
+            return web.json_response({"status_code": "404", "ctx": "bank_account_not_found", "message": "Provided user has no bank account in UKP"},
+                                     status=404)
         citizen = await CitizenM(found_citizen).data()
         bank_account = await BankM(found_bank).data()
-        if bank_account["salary"] == 0.00:
+        
+        if bank_account["salary"] == 0:
             await log(request, 406)
-            return web.json_response({"status_code": "406", "message": "User has no more daily salary"}, status=406)
+            return web.json_response({
+                "status_code": "406",
+                "ctx": "no_more_salary_today",
+                "message": {
+                    "daily_salary": bank_account['dailySalary']
+                }},
+            status=406)
         
-        money = round(random.uniform(0.01, (bank_account["salary"] / 2)), 2)
-        
+        found_business = await db['business'].find_one({"businessId": bank_account['businessId']})
+        if found_business is None:
+            await log(request, 404)
+            return web.json_response({"status_code": "404", "ctx": "business_not_found", "message": "User's business (job) not exists in UKP system."},
+                                     status=404)
+        business = await BusinessM(found_business).data()
+        if int(bank_account["salary"] / 2) > 0:
+            money = random.randint(1, int(bank_account["salary"] / 2))
+        else:
+            money = bank_account["salary"]
+            
         await db["bank"].update_one({"snowflake": str(snowflake)}, {"$inc": {"salary": -money}})
+        await db["business"].update_one({"businessId": str(bank_account.get("businessId"))}, {"$inc": {"money": -money}})
         await db["bank"].update_one({"snowflake": str(snowflake)}, {"$inc": {"money": money}})
         
         await log_payment(db, {
@@ -126,14 +146,23 @@ class CitizenR:
             "money": int(money),
             "timestamp": str(int(time.time())),
             "method": "plus" if int(money) >= 0.00 else "minus",
+            "token": transaction_token,
+            "authorized": True,
             "reason": "salary"
         })
         await log(request, 200)
         return web.json_response({
             "status_code": "200",
             "ctx": "success",
-            "message": f"{citizen['firstName']}, pracowałeś w firmie {bank_account['business']}",
-            "extra": {"money": str(money)}
+            "message": {
+                "money": str(money),
+                "job": bank_account['job'],
+                "business": bank_account['business'],
+                "businessType": business['companyType'],
+                "citizen_name": citizen['firstName'],
+                "rest_salary": bank_account['salary'],
+                "daily_salary": bank_account['dailySalary']
+            }
         }, status=200)
     
     async def get_citizen(self, request: web.Request):

@@ -15,6 +15,8 @@ from routes.Discord.citizen.citizen_route import CitizenR
 from routes.Discord.kingdoms.kingdoms_route import KingdomsR
 from routes.Discord.rates.rates_route import RatesR
 from routes.Minecraft.minecraft_auth import MinecraftAuthAPI
+from routes.Minecraft.minecraft_chat_portal import MinecraftChatPortal
+from routes.Minecraft.minecraft_job_block import MinecraftJobBlock
 from tools.background_tasks import UpdateSalary
 from tools.miscellaneous import log
 
@@ -28,12 +30,15 @@ if __name__ == "__main__":
     
     app.add_routes(routes)
     KingdomsR(app)
+    BusinessR(app)
     CitizenR(app)
-    threading.Thread(BankR, args=(app,)).start()
+    BankR(app)
     RatesR(app)
     OAuthR(app)
     UpdateSalary(app)
     MinecraftAuthAPI(app)
+    MinecraftChatPortal(app)
+    MinecraftJobBlock(app)
     
     cors = aiohttp_cors.setup(app, defaults={
         "*": aiohttp_cors.ResourceOptions(

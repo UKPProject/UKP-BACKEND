@@ -21,7 +21,6 @@ class PaymentCtx(TypedDict):
     method: str
     token: str
     authorized: bool
-    
 
 
 async def log_payment(db, ctx: PaymentCtx):
@@ -35,13 +34,27 @@ class BankR:
             web.get("/bank/account", self.get_bank_account),
             web.post("/bank/account", self.create_bank_account),
             web.post("/bank/transaction", self.send_money),
-            web.get("/bank/websocket", self.bank_websocket)
+            web.get("/bank/websocket", self.bank_websocket),
+            web.get("/bank/account/all", self.get_all_accounts)
         ])
         self.bot_websocket: Union[web.WebSocketResponse, None] = None
         self.pending_transactions: List[PaymentCtx] = []
         print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| Bank")
-        
+    
+    async def get_all_accounts(self, request: web.Request):
+        req_headers = request.headers
+        kingdom = req_headers.get("kingdom")
+        if kingdom is None:
+            db = self.app['db']
+            return web.json_response([await BankM(account).data() async for account in db["bank"].find()], status=200)
+        else:
+            db = self.app['db']
+            return web.json_response(
+                [await BankM(account).data() async for account in db["bank"].find({"kingdom": kingdom.lower()})],
+                status=200)
+    
     async def bank_websocket(self, request: web.Request):
+        print("sasa")
         if self.bot_websocket is None:
             ws = web.WebSocketResponse()
             await ws.prepare(request)
@@ -63,10 +76,10 @@ class BankR:
                                     transaction["authorized"] = True
                                     break
                 elif msg.type in (WSMsgType.CLOSE, WSMsgType.CLOSING, WSMsgType.CLOSED, WSMsgType.ERROR):
-                        self.bot_websocket = None
-                        for transaction in self.pending_transactions:
-                            transaction["authorized"] = False
-                    
+                    self.bot_websocket = None
+                    for transaction in self.pending_transactions:
+                        transaction["authorized"] = False
+                await asyncio.sleep(0)
     
     async def send_money(self, request: web.Request):
         req_json = await request.json()
@@ -99,13 +112,16 @@ class BankR:
             if citizen_from is None:
                 await log(request, 400)
                 return web.json_response(
-                    {"status_code": "400", "ctx": "not_found", "message": "Citizen (from) not registered in UKP system"},
+                    {"status_code": "400", "ctx": "not_found",
+                     "message": "Citizen (from) not registered in UKP system"},
                     status=400)
             c_from = await BankM(citizen_from).data()
-        
+            
             if c_from["balance"] < int(money):
                 await log(request, 409)
-                return web.json_response({"status_code": "409", "ctx": "not_enough", "message": "Citizen don't have enough money"}, status=409)
+                return web.json_response(
+                    {"status_code": "409", "ctx": "not_enough", "message": "Citizen don't have enough money"},
+                    status=409)
             
             await self.bot_websocket.send_json({
                 "action": "transaction_request",
@@ -127,19 +143,20 @@ class BankR:
             })
             start_time = time.time()
             while True:
-                if int(time.time() - start_time) >= 15:
+                if int(time.time() - start_time) >= 25:
                     return web.json_response({
                         "status_code": "401",
                         "ctx": "auth_timeout",
                         "message": "user has not authorized the transaction in time or refused it"
                     }, status=401)
-                transaction_ctx = list(filter(lambda x: x.get("token") == transaction_token, self.pending_transactions))[0]
+                transaction_ctx = \
+                list(filter(lambda x: x.get("token") == transaction_token, self.pending_transactions))[0]
                 if transaction_ctx["authorized"] is True:
                     await db["bank"].update_one({"snowflake": str(from_snowflake)}, {"$inc": {"balance": -int(money)}})
                     self.pending_transactions.remove(transaction_ctx)
                     break
                 await asyncio.sleep(0)
-
+        
         if to_snowflake.startswith("b+"):
             citizen_to = await db["business"].find_one({"businessId": str(to_snowflake)})
             if citizen_to is None:
@@ -158,9 +175,9 @@ class BankR:
                 return web.json_response(
                     {"status_code": "400", "ctx": "not_found", "message": "Citizen (to) not registered in UKP system"},
                     status=400)
-
-            await db["bank"].update_one({"snowflake": str(to_snowflake)}, {"$inc": {"balance": int(money)}})
             
+            await db["bank"].update_one({"snowflake": str(to_snowflake)}, {"$inc": {"balance": int(money)}})
+        
         await log_payment(db, {
             "sender": str(from_snowflake),
             "receiver": str(to_snowflake),
@@ -172,7 +189,8 @@ class BankR:
             "authorized": True
         })
         await log(request, 200)
-        return web.json_response({"status_code": "200", "ctx": "success", "message": "Money sent successfully"}, status=200)
+        return web.json_response({"status_code": "200", "ctx": "success", "message": "Money sent successfully"},
+                                 status=200)
     
     async def get_bank_account(self, request: web.Request):
         req_headers = request.headers
@@ -180,14 +198,15 @@ class BankR:
         snowflake = req_headers.get("snowflake")
         if pseo is None and snowflake is None:
             await log(request, 400)
-            return web.json_response({"status_code": "400", "message": "Please provide valid PSEO or discord ID (snowflake)"},
-                                     status=400)
+            return web.json_response(
+                {"status_code": "400", "message": "Please provide valid PSEO or discord ID (snowflake)"},
+                status=400)
         if pseo is None:
             found = await self.app['db']["bank"].find_one({"snowflake": str(snowflake)})
             if found is None:
                 await log(request, 400)
                 return web.json_response({"status_code": "400", "message": "Please provide valid PSEO or discord ID ("
-                                                                     "snowflake)"}, status=400)
+                                                                           "snowflake)"}, status=400)
             bank_account = await BankM(found).data()
             await log(request, 200)
             return web.json_response({
@@ -200,7 +219,7 @@ class BankR:
             if found is None:
                 await log(request, 400)
                 return web.json_response({"status_code": "400", "message": "Please provide valid PSEO or discord ID ("
-                                                                     "snowflake)"}, status=400)
+                                                                           "snowflake)"}, status=400)
             bank_account = await BankM(found).data()
             await log(request, 200)
             return web.json_response({
@@ -211,7 +230,6 @@ class BankR:
     
     async def create_bank_account(self, request: web.Request):
         req_json = await request.json()
-        
         try:
             await BankM(req_json).data()
         except DataNotFilled:
@@ -229,20 +247,23 @@ class BankR:
                 "status_code": "409",
                 "message": "Account of that user already exists"
             }, status=409)
-        
-        found_business = await db["business"].find_one({"name": str(data.get("business"))})
+
+        """
+        found_business = await db["business"].find_one({"businessId": str(data.get("businessId"))})
         if found_business is None:
             return web.json_response({
                 "status_code": "404",
-                "message": "Business with that name not found"
+                "message": "Business with that id not found"
             }, status=404)
         
-        await db["bank"].insert_one(data)
-        await db["business"].update_one({"name": str(data.get("business"))}, {"$push": {"employees": {
+        
+        await db["business"].update_one({"businessId": str(data.get("businessId"))}, {"$push": {"employees": {
             "snowflake": str(data.get("snowflake")),
             "salary": int(data.get("salary")),
             "pseo": str(data.get("pseo")),
             "worked": 0
         }}})
-        
-        return web.json_response({"message": "Citizen created successfully", "status_code": "200", "ctx": "success"}, status=200)
+        """
+        await db["bank"].insert_one(data)
+        return web.json_response({"message": "Bank account created successfully", "status_code": "200", "ctx": "success"},
+                                 status=200)

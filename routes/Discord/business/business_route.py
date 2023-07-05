@@ -34,7 +34,13 @@ class BusinessR:
                 "ctx": "exists",
                 "message": f"business with that name ({req_json.get('name')}) already exists"
             }, status=400)
-        
+        business_id_found = await db['business'].find_one({"businessId": str(req_json.get("businessId"))})
+        if business_id_found is not None:
+            return web.json_response({
+                "status_code": "400",
+                "ctx": "exists",
+                "message": f"business with that id ({req_json.get('businessId')}) already exists"
+            }, status=400)
         new_business = await BusinessM(req_json).data()
         await db['business'].insert_one(new_business)
         return web.json_response({
@@ -67,7 +73,7 @@ class BusinessR:
             return web.json_response({"status_code": "200", "ctx": "success", "message": business_data}, status=200)
             
         elif owner_snowflake is None and businessId is None:
-            business_found = await db["business"].find_one({"name": str(name)})
+            business_found = await db["business"].find_one({"businessId": str(name)})
             business_data = await BusinessM(business_found).data()
             if business_found is None:
                 return web.json_response({

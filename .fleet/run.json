@@ -1,0 +1,9 @@
+{
+    "configurations": [
+        {
+            "type": "python",
+            "name": "run",
+            "arguments": ["run pipenv"]
+        }
+    ]
+}
