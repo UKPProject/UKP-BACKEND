@@ -25,7 +25,8 @@ routes = aiohttp.web.RouteTableDef()
 if __name__ == "__main__":
     app = aiohttp.web.Application()
     
-    app['db'] = AsyncIOMotorClient("mongodb://158.101.119.184:1541")['ukp']
+    #app['db'] = AsyncIOMotorClient("mongodb://158.101.119.184:1541")['ukp']
+    app['db'] = AsyncIOMotorClient("mongodb://localhost:1541")['ukp']
     app['db'].get_io_loop = asyncio.get_running_loop
     
     app.add_routes(routes)
