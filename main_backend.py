@@ -8,6 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import aiohttp.web
 from colorama import Fore
 
+from routes.CustomPlugins.millionaires.millionaires_route import MillionairesR
 from routes.Dashboard.oauth.oauth_route import OAuthR
 from routes.Discord.bank.bank_route import BankR
 from routes.Discord.business.business_route import BusinessR
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     MinecraftAuthAPI(app)
     MinecraftChatPortal(app)
     MinecraftJobBlock(app)
-    
+    MillionairesR(app)
     cors = aiohttp_cors.setup(app, defaults={
         "*": aiohttp_cors.ResourceOptions(
             allow_credentials=True,
