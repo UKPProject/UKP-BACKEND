@@ -26,6 +26,7 @@ class MillionairesR:
 
     async def sync_game(self, request: web.Request):
         req_json = await request.json()
+        # TODO ZROBIĆ ENDPOINT OD SYNCHRONIZOWANIA INFORMACJI O AKTUALNEJ ROZGRYWCE MILIONERÓW
 
 
     async def start_new_session(self, request: web.Request):
