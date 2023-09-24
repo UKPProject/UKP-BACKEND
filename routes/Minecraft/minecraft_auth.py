@@ -5,7 +5,7 @@ from aiohttp import web, WSMsgType
 from colorama import Fore
 from secrets import token_urlsafe
 
-from tools.miscellaneous import DataNotFilled, ConnectionWS
+from tools.miscellaneous import DataNotFilled, ConnectionWS, log
 
 
 class PlayerDB(TypedDict):
@@ -36,15 +36,26 @@ class MinecraftAuthAPI:
         self.app: aiohttp.web_app.Application = app
         self.app.add_routes([
             web.get("/minecraft/auth/ws", self.websocket_handler),
-            web.get("/minecraft/auth", self.check_player_authorized)
+            web.get("/minecraft/auth", self.check_player_authorized),
+            web.get("/minecraft/auth/guild", self.get_usernames_in_guild)
         ])
         self.authorized_connections = []
         self.authorized_tokens = ["PLUGIN_WEBSOCKET", "BOT_WEBSOCKET"]
         self.used_tokens: List[ConnectionWS] = []
+        self.usernames_in_ukp: List[str] = []
         print(f"{Fore.YELLOW}[INIT]{Fore.RESET}| MinecraftAuthorizationAPI")
-        
+
+    async def get_usernames_in_guild(self, request: web.Request):
+        return web.json_response({
+            "status_code": "200",
+            "ctx": "success",
+            "message": self.usernames_in_ukp
+        }, status=200)
+
     async def check_player_authorized(self, request: web.Request):
         req_headers = request.headers
+        print(req_headers)
+        await log(request, 699)
         if req_headers.get("uuid"):
             db = self.app["db"]['minecraft_auth']
             found = await db.find_one({"uuid": str(req_headers.get("uuid"))})
@@ -55,11 +66,19 @@ class MinecraftAuthAPI:
                     "message": "user not found in db"
                 }, status=400)
             data = await PlayerDBModel(found).data()
+            await log(request, 200)
             return web.json_response({
                 "status_code": "200",
                 "ctx": "success",
                 "message": data
             }, status=200, headers={"d_id": data.get("d_id")})
+        else:
+            await log(request, 400)
+            return web.json_response({
+                "status_code": "400",
+                "ctx": "not_found",
+                "message": "uuid not found in headers"
+            }, status=400)
     
     async def websocket_handler(self, request: web.Request):
         ws = web.WebSocketResponse()
@@ -109,7 +128,8 @@ class MinecraftAuthAPI:
                                     else:
                                         await db['minecraft_auth'].update_one({"uuid": uuid}, {"$set": {"d_id": discord_id, "timestamp": timestamp}})
    
-                                    
+                    case "update_usernames":
+                        self.usernames_in_ukp = data.get("usernames")
                                     
                     case "authorization_login_denied":
                         for ws_conn in self.used_tokens:

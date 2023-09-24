@@ -19,14 +19,20 @@ class MillionairesR:
             web.get("/millionaires/session/get", self.get_session),
             web.put("/millionaires/session/lifeline", self.use_session_lifeline),
             web.put("/millionaires/session/step", self.update_session_step),
-            web.delete("/millionaires/session/close", self.close_session)
+            web.delete("/millionaires/session/close", self.close_session),
+            web.post("/millionaires/session/sync", self.sync_game)
         ])
         print(f"{Fore.CYAN}[INIT]{Fore.RESET}| Millionaires")
+
+    async def sync_game(self, request: web.Request):
+        req_json = await request.json()
+
 
     async def start_new_session(self, request: web.Request):
         req_json = await request.json()
         if req_json.get("user_snowflake") is not None and req_json.get("mode") is not None:
-            check_sessions = [session async for session in self.app['db']['MillionairesSessions'].find({"active": True})]
+            check_sessions = [session async for session in
+                              self.app['db']['MillionairesSessions'].find({"active": True})]
             if len(check_sessions) > 0:
                 await log(request, 409)
                 return web.json_response({
@@ -41,7 +47,12 @@ class MillionairesR:
                 user_snowflake=str(req_json.get("user_snowflake")),
                 step=0,
                 active=True,
-                lifelines=[Lifeline(type=0, used=False), Lifeline(type=1, used=False), Lifeline(type=2, used=False), Lifeline(type=3, used=False)]
+                lifelines=[
+                    Lifeline(type=0, used=False),
+                    Lifeline(type=1, used=False),
+                    Lifeline(type=2, used=False),
+                    Lifeline(type=3, used=False)
+                ]
             )
             print(new_session)
 
@@ -63,7 +74,8 @@ class MillionairesR:
     async def get_session(self, request: web.Request):
         req_json = await request.json()
         if req_json.get("user_snowflake") is not None:
-            check_sessions = [session async for session in self.app['db']['MillionairesSessions'].find({"active": True})]
+            check_sessions = [session async for session in
+                              self.app['db']['MillionairesSessions'].find({"active": True})]
             if len(check_sessions) == 0:
                 await log(request, 404)
                 return web.json_response({
@@ -89,7 +101,8 @@ class MillionairesR:
     async def close_session(self, request: web.Request):
         req_json = await request.json()
         if req_json.get("user_snowflake") is not None:
-            check_sessions = [session async for session in self.app['db']['MillionairesSessions'].find({"active": True})]
+            check_sessions = [session async for session in
+                              self.app['db']['MillionairesSessions'].find({"active": True})]
             if len(check_sessions) == 0:
                 await log(request, 404)
                 return web.json_response({
@@ -98,7 +111,8 @@ class MillionairesR:
                     "message": "There is no active session"
                 }, status=404)
             else:
-                await self.app['db']['MillionairesSessions'].update_one({"active": True, "user_id": req_json.get("user_snowflake")}, {"$set": {"active": False}})
+                await self.app['db']['MillionairesSessions'].update_one(
+                    {"active": True, "user_id": req_json.get("user_snowflake")}, {"$set": {"active": False}})
                 await log(request, 200)
                 return web.json_response({
                     "status_code": "200",
@@ -116,7 +130,8 @@ class MillionairesR:
     async def use_session_lifeline(self, request: web.Request):
         req_json = await request.json()
         if req_json.get("user_snowflake") is not None and req_json.get("lifeline") is not None:
-            check_sessions = [session async for session in self.app['db']['MillionairesSessions'].find({"active": True})]
+            check_sessions = [session async for session in
+                              self.app['db']['MillionairesSessions'].find({"active": True})]
             if len(check_sessions) == 0:
                 await log(request, 404)
                 return web.json_response({
@@ -137,7 +152,8 @@ class MillionairesR:
 
                     check_sessions[0]["lifelines"][req_json.get("lifeline")]["used"] = True
                     print(check_sessions[0]["lifelines"][req_json.get("lifeline")]["used"])
-                    s = await self.app['db']['MillionairesSessions'].update_one({"active": True}, {"$set": {"lifelines": check_sessions[0]['lifelines']}})
+                    s = await self.app['db']['MillionairesSessions'].update_one({"active": True}, {
+                        "$set": {"lifelines": check_sessions[0]['lifelines']}})
                     print(s)
                     await log(request, 200)
                     return web.json_response({
@@ -156,7 +172,8 @@ class MillionairesR:
     async def update_session_step(self, request: web.Request):
         req_json = await request.json()
         if req_json.get("user_snowflake") is not None and req_json.get("step") is not None:
-            check_sessions = [session async for session in self.app['db']['MillionairesSessions'].find({"active": True})]
+            check_sessions = [session async for session in
+                              self.app['db']['MillionairesSessions'].find({"active": True})]
             if len(check_sessions) == 0:
                 await log(request, 404)
                 return web.json_response({
@@ -165,7 +182,9 @@ class MillionairesR:
                     "message": "There is no active session"
                 }, status=404)
             else:
-                await self.app['db']['MillionairesSessions'].update_one({"active": True, "user_id": str(req_json.get("user_snowflake"))}, {"$set": {"step": int(req_json.get("step"))}})
+                await self.app['db']['MillionairesSessions'].update_one(
+                    {"active": True, "user_id": str(req_json.get("user_snowflake"))},
+                    {"$set": {"step": int(req_json.get("step"))}})
                 await log(request, 200)
                 return web.json_response({
                     "status_code": "200",
@@ -179,7 +198,6 @@ class MillionairesR:
                 "ctx": "data",
                 "message": "Please provide valid data"
             }, status=400)
-
 
     async def add_new_question(self, request: web.Request):
         req_json = await request.json()
